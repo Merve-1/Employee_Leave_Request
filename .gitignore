@@ -1,0 +1,24 @@
+# Visual Studio
+.vs/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# Rider 
+.idea/
+*.sln.iml
+
+# Build output
+[Bb]in/
+[Oo]bj/
+
+# NuGet
+*.nupkg
+*.snupkg
+packages/
+.nuget/
+
+# Generated/static build files
+wwwroot/dist/
+wwwroot/build/
