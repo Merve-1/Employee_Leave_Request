@@ -33,6 +33,13 @@ Add this configuration in you appsettings.Development.json
 ```
 dotnet ef database update
 ```
-![DB Definiation](db.png)
+![DB Definiation](readme-images/01_db.png)
 ### DB After Seeding
-![DB Seeding](db2.png)
+![DB Seeding](readme-images/02_db2.png)
+
+## End Points 
+
+### Get Employees
+![Get All Employees](readme-images/03_GetAllEmployees.png)
+### Employee Search
+![Search](readme-images/04_SearchForEmployee.png)

@@ -18,6 +18,15 @@ public class LeaveDbContext : DbContext
         modelBuilder.Entity<LeaveRequest>(entity =>
         {
             entity.HasKey(l => l.Id);
+
+            entity.Property(l => l.EmployeeId)
+                .IsRequired();
+
+            entity.Property(l => l.StartDate)
+                .IsRequired();
+
+            entity.Property(l => l.EndDate)
+                .IsRequired();
             
             entity.Property(l => l.Type)
                 .HasConversion<string>()
@@ -26,20 +35,24 @@ public class LeaveDbContext : DbContext
             entity.Property(l => l.Status)
                 .HasConversion<string>()
                 .IsRequired();
-
-            entity.Property(l => l.ReviewerNote)
-                .HasMaxLength(500);
             
             entity.Property(l => l.CreatedAt)
                 .IsRequired();
             
-            entity.HasCheckConstraint(
-                "CK_LeaveRequests_DateRange",
-                "[EndDate] >= [StartDate]");
+            entity.Property(l => l.ReviewerNote)
+                .HasMaxLength(500)
+                .IsRequired(false);
+            entity.ToTable(table =>
+            {
+                table.HasCheckConstraint(
+                    "CK_LeaveRequests_DateRange",
+                    "[EndDate] >= [StartDate]");
             
-            entity.HasCheckConstraint(
-                "Ck_LeaveRequests_Status", 
-                "[Status] IN ('Pending', 'Approved', 'Rejected')");
+                table.HasCheckConstraint(
+                    "Ck_LeaveRequests_Status", 
+                    "[Status] IN ('Pending', 'Approved', 'Rejected')");
+            });
+            
 
         });
     LeaveRequestSeed.Seed(modelBuilder);
