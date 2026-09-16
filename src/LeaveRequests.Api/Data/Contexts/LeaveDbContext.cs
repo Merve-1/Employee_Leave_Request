@@ -1,3 +1,4 @@
+using LeaveRequests.Api.Data.Seeder;
 using LeaveRequests.Api.Entities;
 using Microsoft.EntityFrameworkCore;
 
@@ -41,5 +42,7 @@ public class LeaveDbContext : DbContext
                 "[Status] IN ('Pending', 'Approved', 'Rejected')");
 
         });
+    LeaveRequestSeed.Seed(modelBuilder);
     }
+
 }

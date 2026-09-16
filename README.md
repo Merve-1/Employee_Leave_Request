@@ -34,3 +34,5 @@ Add this configuration in you appsettings.Development.json
 dotnet ef database update
 ```
 ![DB Definiation](db.png)
+### DB After Seeding
+![DB Seeding](db2.png)
