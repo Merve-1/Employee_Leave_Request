@@ -22,3 +22,6 @@ packages/
 # Generated/static build files
 wwwroot/dist/
 wwwroot/build/
+
+# Local development configuration 
+**/appsettings.Development.json
