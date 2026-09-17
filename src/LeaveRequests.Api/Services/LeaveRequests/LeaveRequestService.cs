@@ -10,14 +10,13 @@ public class LeaveRequestService : ILeaveRequestService
 {
     private readonly LeaveDbContext _context;
     private readonly IEmployeeService _employeeService;
-
     public LeaveRequestService(LeaveDbContext context, IEmployeeService employeeService)
     {
         _context = context;
         _employeeService = employeeService;
     }
-    
-    public async Task<IReadOnlyList<LeaveRequestDto>> GetAllAsync(LeaveStatus? status, int? employeeId, int page, int pageSize)
+    public async Task<IReadOnlyList<LeaveRequestDto>> GetAllAsync(LeaveStatus? status, int? employeeId, int page,
+        int pageSize)
     {
         var query = _context.LeaveRequests.AsNoTracking().AsQueryable();
         if (status.HasValue)
@@ -29,31 +28,47 @@ public class LeaveRequestService : ILeaveRequestService
         {
             query = query.Where(x => x.EmployeeId == employeeId.Value);
         }
-
         var leaveRequests = await query.OrderByDescending(x => x.CreatedAt)
             .Skip((page - 1) * pageSize)
             .Take(pageSize)
             .ToListAsync();
         var employees = await _employeeService.GetAllAsync();
-        
+
         var employeeLookup = employees.ToDictionary(e => e.Id);
         return leaveRequests.Select(leaveRequest =>
         {
             employeeLookup.TryGetValue(leaveRequest.EmployeeId, out var employee);
-            return new LeaveRequestDto
-            {
-                Id = leaveRequest.Id,
-                EmployeeId = leaveRequest.EmployeeId,
-                EmployeeName = employee?.Name ?? "Unknown",
-                Department = employee?.Department ?? "Unknown",
-                StartDate = leaveRequest.StartDate,
-                EndDate = leaveRequest.EndDate,
-                Type = leaveRequest.Type,
-                Status = leaveRequest.Status,
-                CreatedAt = leaveRequest.CreatedAt,
-                ReviewerNote = leaveRequest.ReviewerNote
-            };
+            return MapToDto(leaveRequest, employee);
         }).ToList();
+    }
 
+    public async Task<LeaveRequestDto?> GetByIdAsync(int id)
+    {
+        var leaveRequest = await _context.LeaveRequests.AsNoTracking()
+            .FirstOrDefaultAsync(l => l.Id == id);
+        if (leaveRequest is null)
+        {
+            return null;
+        }
+        var employee = await _employeeService.GetByIdAsync(leaveRequest.EmployeeId);
+
+        return MapToDto(leaveRequest, employee);
+    }
+
+    private LeaveRequestDto MapToDto(LeaveRequest leaveRequest, EmployeeDto? employee)
+    {
+        return new LeaveRequestDto
+        {
+            Id = leaveRequest.Id,
+            EmployeeId = leaveRequest.EmployeeId,
+            EmployeeName = employee?.Name ?? "Unknown",
+            Department = employee?.Department ?? "Unknown",
+            StartDate = leaveRequest.StartDate,
+            EndDate = leaveRequest.EndDate,
+            Type = leaveRequest.Type,
+            Status = leaveRequest.Status,
+            CreatedAt = leaveRequest.CreatedAt,
+            ReviewerNote = leaveRequest.ReviewerNote
+        };
     }
 }

@@ -16,11 +16,8 @@ public class LeaveRequestsController : ControllerBase
     }
 
     [HttpGet]
-    public async Task<IActionResult> GetAll(
-        [FromQuery] LeaveStatus? status,
-        [FromQuery] int? employeeId,
-        [FromQuery] int page = 1,
-        [FromQuery] int pageSize = 10)
+    public async Task<IActionResult> GetAll([FromQuery] LeaveStatus? status, [FromQuery] int? employeeId,
+        [FromQuery] int page = 1, [FromQuery] int pageSize = 10)
     {
         if (page < 1)
         {
@@ -29,7 +26,6 @@ public class LeaveRequestsController : ControllerBase
                 {
                     error = "Page must be greater than zero"
                 });
-            
         }
         if (employeeId > 10)
         {
@@ -38,7 +34,6 @@ public class LeaveRequestsController : ControllerBase
                 {
                     error = "employee id must be less than 11"
                 });
-            
         }
         if (pageSize < 1)
         {
@@ -49,7 +44,6 @@ public class LeaveRequestsController : ControllerBase
                     error = "PageSize must be greater than zero"
                 });
         }
-
         if (pageSize > 100)
         {
             return BadRequest(
@@ -58,9 +52,22 @@ public class LeaveRequestsController : ControllerBase
                     error = "PageSize cannot exceed 100"
                 });
         }
-
         var leaveRequests = await _leaveRequestService.GetAllAsync(
             status, employeeId, page, pageSize);
         return Ok(leaveRequests);
+    }
+
+    [HttpGet("{id:int}")]
+    public async Task<IActionResult> GetById(int id)
+    {
+        var leaveRequest = await _leaveRequestService.GetByIdAsync(id);
+        if (leaveRequest is null)
+        {
+            return NotFound(new
+            {
+                error= $"leave request with id {id} was not found"
+            });
+        }
+        return Ok(leaveRequest);
     }
 }
