@@ -20,11 +20,16 @@ public class ExceptionHandlingMiddleware
         {
             await _next(context);
         }
-      
+
         catch (EmployeeServiceException e)
         {
             _logger.LogError(e, "Employee service error.");
-            await  WriteErrorResponseAsync(context, StatusCodes.Status503ServiceUnavailable, e.Message);
+            await WriteErrorResponseAsync(context, StatusCodes.Status503ServiceUnavailable, e.Message);
+        }
+        catch (LeaveRequestServiceException e)
+        {
+            _logger.LogError(e, "Leave request service error.");
+            await WriteErrorResponseAsync(context, StatusCodes.Status503ServiceUnavailable, e.Message);
         }
         catch (Exception e)
         {

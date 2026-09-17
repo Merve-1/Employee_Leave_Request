@@ -54,3 +54,7 @@ You can also create the db schema and seed the initial leave requests using the 
 ![Get All Employees](readme-images/03_GetAllEmployees.png)
 ### Employee Search
 ![Search](readme-images/04_SearchForEmployee.png)
+### Get All Leave Requests
+![Get All LR](readme-images/07_LR.png)
+### Get Leave Request with Filter 
+![Filtered LR](readme-image/08_FilteredLR.png)
