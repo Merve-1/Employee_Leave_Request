@@ -87,6 +87,35 @@ public class LeaveRequestService : ILeaveRequestService
         return MapToDto(leaveRequest, employee);
     }
 
+    public async Task<LeaveRequestDto?> UpdateStatusAsync(int id, UpdateLeaveStatusDto request)
+    {
+        var leaveRequest = await _context.LeaveRequests.AsNoTracking().FirstOrDefaultAsync(l => l.Id == id);
+        if (leaveRequest is null)
+        {
+            return null;
+        }
+
+        if (leaveRequest.Status != LeaveStatus.Pending)
+        {
+            throw new InvalidOperationException("Only pending leave requests can be approved or rejected");
+        }
+
+        if (request.Status != LeaveStatus.Approved && request.Status != LeaveStatus.Rejected)
+        {
+            throw new InvalidOperationException("Status must be approved or rejected");
+        }
+        
+        leaveRequest.Status = request.Status;
+        leaveRequest.ReviewerNote =  request.ReviewerNote;
+        
+        await _context.SaveChangesAsync();
+        Console.WriteLine($"Updated leave request with id {leaveRequest.Status}");
+        
+        var employee = await _employeeService.GetByIdAsync(leaveRequest.EmployeeId);
+        
+        return MapToDto(leaveRequest, employee);
+    }
+
     private LeaveRequestDto MapToDto(LeaveRequest leaveRequest, EmployeeDto? employee)
     {
         return new LeaveRequestDto

@@ -36,6 +36,11 @@ public class ExceptionHandlingMiddleware
             _logger.LogError(e, "Invalid Argument");
             await WriteErrorResponseAsync(context, StatusCodes.Status400BadRequest, e.Message);
         }
+        catch (InvalidOperationException e)
+        {
+            _logger.LogError(e, "Invalid leave request attempt");
+            await WriteErrorResponseAsync(context, StatusCodes.Status409Conflict, e.Message);
+        }
         catch (Exception e)
         {
             _logger.LogError(e, "Unhandled exception");

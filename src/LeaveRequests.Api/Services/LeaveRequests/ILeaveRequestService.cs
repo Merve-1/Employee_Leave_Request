@@ -11,4 +11,6 @@ public interface ILeaveRequestService
     Task<LeaveRequestDto?> GetByIdAsync(int id);
     
     Task<LeaveRequestDto> CreateAsync(CreateLeaveRequestDto request);
+    
+    Task<LeaveRequestDto?> UpdateStatusAsync(int id, UpdateLeaveStatusDto request);
 }

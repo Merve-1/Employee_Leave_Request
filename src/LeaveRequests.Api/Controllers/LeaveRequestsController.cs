@@ -97,4 +97,26 @@ public class LeaveRequestsController : ControllerBase
        
         return CreatedAtAction(nameof(GetById), new { id = leaveRequest.Id }, leaveRequest);
     }
+
+    /// <summary>
+    /// Update the pending status to approved or rejected
+    /// </summary>
+    /// <param name="id"></param>
+    /// <param name="request"></param>
+    /// <returns></returns>
+    [HttpPut("{id:int}/status")]
+    public async Task<IActionResult> UpdateStatus(int id, [FromBody] UpdateLeaveStatusDto request)
+    {
+        var leaveRequest = await _leaveRequestService.UpdateStatusAsync(id, request);
+        if (leaveRequest is null)
+        {
+            return NotFound(new
+            {
+                error = $"Leave Request with id {id} was not found"
+            });
+        }
+
+        return Ok(leaveRequest);
+    }
+    
 }
