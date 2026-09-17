@@ -86,7 +86,7 @@ public class LeaveRequestService : ILeaveRequestService
 
     public async Task<LeaveRequestDto?> UpdateStatusAsync(int id, UpdateLeaveStatusDto request)
     {
-        var leaveRequest = await _context.LeaveRequests.AsNoTracking().FirstOrDefaultAsync(l => l.Id == id);
+        var leaveRequest = await _context.LeaveRequests.FirstOrDefaultAsync(l => l.Id == id);
         if (leaveRequest is null)
         {
             return null;
@@ -113,7 +113,7 @@ public class LeaveRequestService : ILeaveRequestService
 
     public async Task<bool> DeleteAsync(int id)
     {
-        var leaveRequest = await _context.LeaveRequests.AsNoTracking().FirstOrDefaultAsync(l => l.Id == id);
+        var leaveRequest = await _context.LeaveRequests.FirstOrDefaultAsync(l => l.Id == id);
 
         if (leaveRequest is null)
         {
