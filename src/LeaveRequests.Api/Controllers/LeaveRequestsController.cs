@@ -92,9 +92,7 @@ public class LeaveRequestsController : ControllerBase
     [HttpPost]
     public async Task<IActionResult> Create([FromBody] CreateLeaveRequestDto request)
     {
-      
         var leaveRequest = await _leaveRequestService.CreateAsync(request);
-       
         return CreatedAtAction(nameof(GetById), new { id = leaveRequest.Id }, leaveRequest);
     }
 
@@ -115,8 +113,22 @@ public class LeaveRequestsController : ControllerBase
                 error = $"Leave Request with id {id} was not found"
             });
         }
-
         return Ok(leaveRequest);
+    }
+
+    [HttpDelete("{id:int}")]
+    public async Task<IActionResult> Delete(int id)
+    {
+        var deleted = await _leaveRequestService.DeleteAsync(id);
+        if (!deleted)
+        {
+            return NotFound(new
+            {
+                error = $"Leave request with id {id} was nto found"
+            });
+        }
+
+        return NoContent();
     }
     
 }

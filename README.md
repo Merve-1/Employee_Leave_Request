@@ -64,6 +64,8 @@ You can also create the db schema and seed the initial leave requests using the 
 ![Create LeaveRequest](readme-images/10_PostLR.png)
 ![Create LeaveRequest](readme-images/11_PostLR.png)
 ![DB After Post Request](readme-images/12_db.png)
-### Update pending status 
+### Update Pending status 
 ![valid update](readme-images/13_validUpdate.png)
 ![invalid update](readme-images/14_invalidUpdate.png)
+### Delete Leave Request
+![delete LR](15_DeleteLR.png)

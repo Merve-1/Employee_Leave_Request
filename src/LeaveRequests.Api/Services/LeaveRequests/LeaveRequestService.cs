@@ -79,11 +79,8 @@ public class LeaveRequestService : ILeaveRequestService
         };
         _context.LeaveRequests.Add(leaveRequest);
         await _context.SaveChangesAsync();
-        Console.WriteLine($"Created leave request with id {leaveRequest.Id}");
         
-        var exists = await _context.LeaveRequests.AsNoTracking().AnyAsync(l => l.Id == leaveRequest.Id);
 
-        Console.WriteLine($"Exists in DB: {exists}");
         return MapToDto(leaveRequest, employee);
     }
 
@@ -109,11 +106,28 @@ public class LeaveRequestService : ILeaveRequestService
         leaveRequest.ReviewerNote =  request.ReviewerNote;
         
         await _context.SaveChangesAsync();
-        Console.WriteLine($"Updated leave request with id {leaveRequest.Status}");
-        
         var employee = await _employeeService.GetByIdAsync(leaveRequest.EmployeeId);
         
         return MapToDto(leaveRequest, employee);
+    }
+
+    public async Task<bool> DeleteAsync(int id)
+    {
+        var leaveRequest = await _context.LeaveRequests.AsNoTracking().FirstOrDefaultAsync(l => l.Id == id);
+
+        if (leaveRequest is null)
+        {
+            return false;
+        }
+
+        if (leaveRequest.Status != LeaveStatus.Pending)
+        {
+            throw new InvalidOperationException("Only pending leave requests can be deleted");
+        }
+        _context.LeaveRequests.Remove(leaveRequest);
+        await _context.SaveChangesAsync();
+
+        return true;
     }
 
     private LeaveRequestDto MapToDto(LeaveRequest leaveRequest, EmployeeDto? employee)
