@@ -1,4 +1,6 @@
 @page "/leave-requests"
+@rendermode InteractiveServer
+
 @using global::LeaveRequests.Client.Models
 
 @inject IHttpClientFactory HttpClientFactory
@@ -19,7 +21,80 @@
         <option value="Rejected">Rejected</option>
     </select>
 </div>
+<div class="card mb-4">
+    <div class="card-body">
+        <h5 class="card-title">New Leave Request</h5>
 
+        @if (isLoadingEmployee)
+        {
+            <p>Loading employees...</p>
+        }
+        else if (!string.IsNullOrWhiteSpace(employeesErrorMessage))
+        {
+            <div class="alert alert-danger">
+                @employeesErrorMessage
+                <button class="btn btn-sm btn-outline-danger ms-2" @onclick="LoadEmployeesAsync">
+                    Retry
+                </button>
+            </div>
+        }
+        else
+        {
+            <EditForm Model="newRequest"  FormName="NewLeaveRequestForm" OnValidSubmit="SubmitNewRequestAsync">
+                <DataAnnotationsValidator />
+                <ValidationSummary class="text-danger" />
+
+                <div class="row g-3">
+                    <div class="col-md-3">
+                        <label class="form-label">Employee</label>
+                        <InputSelect class="form-select" @bind-Value="newRequest.EmployeeId">
+                            <option value="">-- Select employee --</option>
+                            @foreach (var emp in employees)
+                            {
+                                <option value="@emp.Id">@emp.Name</option>
+                            }
+                        </InputSelect>
+                    </div>
+
+                    <div class="col-md-2">
+                        <label class="form-label">Start Date</label>
+                        <InputDate class="form-control" @bind-Value="newRequest.StartDate" />
+                    </div>
+
+                    <div class="col-md-2">
+                        <label class="form-label">End Date</label>
+                        <InputDate class="form-control" @bind-Value="newRequest.EndDate" />
+                    </div>
+
+                    <div class="col-md-3">
+                        <label class="form-label">Type</label>
+                        <InputSelect class="form-select" @bind-Value="newRequest.LeaveType">
+                            <option value="">-- Select type --</option>
+                            <option value="Vacation">Vacation</option>
+                            <option value="Sick">Sick</option>
+                            <option value="Unpaid">Unpaid</option>
+                        </InputSelect>
+                    </div>
+
+                    <div class="col-md-2 d-flex align-items-end">
+                        <button type="submit" class="btn btn-primary w-100" disabled="@isSubmitting">
+                            @(isSubmitting ? "Submitting..." : "Submit")
+                        </button>
+                    </div>
+                </div>
+            </EditForm>
+
+            @if (!string.IsNullOrWhiteSpace(submitErrorMessage))
+            {
+                <div class="alert alert-danger mt-3">@submitErrorMessage</div>
+            }
+            @if (!string.IsNullOrWhiteSpace(submitSuccessMessage))
+            {
+                <div class="alert alert-success mt-3">@submitSuccessMessage</div>
+            }
+        }
+    </div>
+</div>
 @if (isLoading)
 {
     <p>Loading leave requests...</p>
@@ -63,6 +138,16 @@ else
 }
 
 @code {
+    private List<EmployeeDto> employees = new();
+    private bool isLoadingEmployee = true;
+    private bool isSubmitting = false;
+
+    private string? employeesErrorMessage;
+    private string? submitErrorMessage;
+    private string? submitSuccessMessage;
+
+    private CreateLeaveRequestDto newRequest = new();
+    
     private List<LeaveRequestDto> leaveRequests = new();
 
     private bool isLoading = true;
@@ -104,6 +189,10 @@ else
                 await response.Content.ReadFromJsonAsync<List<LeaveRequestDto>>();
 
             leaveRequests = result ?? new List<LeaveRequestDto>();
+
+            await LoadLeaveRequestsAsync();
+            await LoadEmployeesAsync();
+            
         }
         catch (Exception ex)
         {
@@ -112,6 +201,97 @@ else
         finally
         {
             isLoading = false;
+        }
+    }
+
+    private async Task LoadLeaveRequestsAsync()
+    {
+        try
+        {
+            isLoading = true;
+            errorMessage = null;
+
+            var http = HttpClientFactory.CreateClient("LeaveApi");
+            var response = await http.GetAsync("api/leave-requests?pageSize=100");
+            
+            if (!response.IsSuccessStatusCode)
+            {
+                employeesErrorMessage = $"Failed to load leave requests. " + $"Server returned {(int)response.StatusCode}" +
+                                        $"({response.ReasonPhrase})";
+                return;
+            }
+
+            var result = await response.Content.ReadFromJsonAsync<List<LeaveRequestDto>>();
+            leaveRequests = result ?? new List<LeaveRequestDto>();
+        }
+        catch (Exception e)
+        {
+            employeesErrorMessage = $"Failed to load leave request: {e.Message}";
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private async Task LoadEmployeesAsync()
+    {
+        try
+        {
+            isLoadingEmployee = true;
+            employeesErrorMessage = null;
+
+            var http = HttpClientFactory.CreateClient("LeaveApi");
+            var response = await http.GetAsync("api/employees");
+            if (!response.IsSuccessStatusCode)
+            {
+                employeesErrorMessage = $"Failed to load employees. " + $"Server returned {(int)response.StatusCode}" +
+                                        $"({response.ReasonPhrase})";
+                return;
+            }
+
+            var result = await response.Content.ReadFromJsonAsync<List<EmployeeDto>>();
+            employees = result ?? new List<EmployeeDto>();
+        }
+        catch (Exception e)
+        {
+            employeesErrorMessage = $"Failed to load employee: {e.Message}";
+        }
+        finally
+        {
+            isLoadingEmployee = false;
+        }
+    }
+
+    public async Task SubmitNewRequestAsync()
+    {
+        try
+        {
+            isSubmitting = true;
+            submitErrorMessage = null;
+            submitSuccessMessage = null;
+            
+            var http = HttpClientFactory.CreateClient("LeaveApi");
+            var response = await http.PostAsJsonAsync("api/leave-requests", newRequest);
+            if (!response.IsSuccessStatusCode)
+            {
+                var body = await response.Content.ReadAsStringAsync();
+                submitErrorMessage = $"Failed to submit leave request. " + $"Server returned {(int)response.StatusCode}" +
+                                     $"({response.ReasonPhrase}).{body}";
+                return;
+            }
+
+            submitSuccessMessage = "Leave request submitted.";
+            newRequest = new CreateLeaveRequestDto();
+            await LoadLeaveRequestsAsync();
+        }
+        catch (Exception e)
+        {
+            submitErrorMessage = $"Failed to submit leave request: {e.Message}";
+        }
+        finally
+        {
+            isSubmitting = false;
         }
     }
 }
