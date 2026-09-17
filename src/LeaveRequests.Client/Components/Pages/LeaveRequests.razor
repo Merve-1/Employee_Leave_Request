@@ -1,9 +1,12 @@
 @page "/leave-requests"
 @rendermode InteractiveServer
 
+@using global::LeaveRequests.Client.Auth
 @using global::LeaveRequests.Client.Models
+@using global::LeaveRequests.Client.Auth
 
 @inject IHttpClientFactory HttpClientFactory
+@inject Microsoft.Extensions.Options.IOptions<AuthOptions> AuthOptionsAccessor
 
 <PageTitle>Leave Requests</PageTitle>
 
@@ -40,9 +43,10 @@
         }
         else
         {
-            <EditForm Model="newRequest"  FormName="NewLeaveRequestForm" OnValidSubmit="SubmitNewRequestAsync">
-                <DataAnnotationsValidator />
-                <ValidationSummary class="text-danger" />
+            <EditForm Model="newRequest" FormName="NewLeaveRequestForm" OnValidSubmit="SubmitNewRequestAsync">
+                <AntiforgeryToken/>
+                <DataAnnotationsValidator/>
+                <ValidationSummary class="text-danger"/>
 
                 <div class="row g-3">
                     <div class="col-md-3">
@@ -58,12 +62,12 @@
 
                     <div class="col-md-2">
                         <label class="form-label">Start Date</label>
-                        <InputDate class="form-control" @bind-Value="newRequest.StartDate" />
+                        <InputDate class="form-control" @bind-Value="newRequest.StartDate"/>
                     </div>
 
                     <div class="col-md-2">
                         <label class="form-label">End Date</label>
-                        <InputDate class="form-control" @bind-Value="newRequest.EndDate" />
+                        <InputDate class="form-control" @bind-Value="newRequest.EndDate"/>
                     </div>
 
                     <div class="col-md-3">
@@ -88,6 +92,7 @@
             {
                 <div class="alert alert-danger mt-3">@submitErrorMessage</div>
             }
+
             @if (!string.IsNullOrWhiteSpace(submitSuccessMessage))
             {
                 <div class="alert alert-success mt-3">@submitSuccessMessage</div>
@@ -119,18 +124,48 @@ else
                 <th>End Date</th>
                 <th>Type</th>
                 <th>Status</th>
+                <th>Actions</th>
+
+                
             </tr>
         </thead>
 
         <tbody>
             @foreach (var request in FilteredLeaveRequests)
             {
+                var isBusy = processingIds.Contains(request.Id);
+                var isPending = request.Status.Equals("Pending", StringComparison.OrdinalIgnoreCase);
+
                 <tr>
                     <td>@request.EmployeeName</td>
                     <td>@request.StartDate.ToString("yyyy-MM-dd")</td>
                     <td>@request.EndDate.ToString("yyyy-MM-dd")</td>
                     <td>@request.LeaveType</td>
                     <td>@request.Status</td>
+                    <td>
+                        @if (isPending && isHrUser)
+                        {
+                            <button class="btn btn-sm btn-success me-1"
+                                    disabled="@isBusy"
+                                    @onclick="() => ApproveAsync(request.Id)">
+                                Approve
+                            </button>
+                            <button class="btn btn-sm btn-warning me-1"
+                                    disabled="@isBusy"
+                                    @onclick="() => RejectAsync(request.Id)">
+                                Reject
+                            </button>
+                            <button class="btn btn-sm btn-danger"
+                                    disabled="@isBusy"
+                                    @onclick="() => DeleteAsync(request.Id)">
+                                Delete
+                            </button>
+                        }
+                        else
+                        {
+                            <span class="text-muted">&mdash;</span>
+                        }
+                    </td>
                 </tr>
             }
         </tbody>
@@ -138,6 +173,9 @@ else
 }
 
 @code {
+    private string DebugClaimsJson => JwtService.GetClaims(Jwt) is { } claims
+            ? string.Join(", ", claims.Select(kv => $"{kv.Key} = {kv.Value}"))
+            : "NO CLAIMS FOUND";
     private List<EmployeeDto> employees = new();
     private bool isLoadingEmployee = true;
     private bool isSubmitting = false;
@@ -155,6 +193,13 @@ else
     private string? errorMessage;
 
     private string selectedStatus = "";
+    
+    private bool isHrUser;
+    private HashSet<int> processingIds = new();
+    private string? actionErrorMessage;
+
+    private string Jwt => AuthOptionsAccessor.Value.HardcodedJwt;
+
 
     private List<LeaveRequestDto> FilteredLeaveRequests =>
         string.IsNullOrWhiteSpace(selectedStatus)
@@ -167,41 +212,15 @@ else
 
     protected override async Task OnInitializedAsync()
     {
-        try
-        {
-            isLoading = true;
-            errorMessage = null;
-
-            var http = HttpClientFactory.CreateClient("LeaveApi");
-            var response = await http.GetAsync("api/leave-requests");
-
-            if (!response.IsSuccessStatusCode)
-            {
-                errorMessage =
-                    $"Failed to load leave requests. " +
-                    $"Server returned {(int)response.StatusCode} " +
-                    $"({response.ReasonPhrase}).";
-
-                return;
-            }
-
-            var result =
-                await response.Content.ReadFromJsonAsync<List<LeaveRequestDto>>();
-
-            leaveRequests = result ?? new List<LeaveRequestDto>();
+        isHrUser = string.Equals(
+            JwtService.GetRole(Jwt),
+            "HR",
+            StringComparison.OrdinalIgnoreCase);
+       
 
             await LoadLeaveRequestsAsync();
             await LoadEmployeesAsync();
-            
-        }
-        catch (Exception ex)
-        {
-            errorMessage = $"Failed to load leave requests: {ex.Message}";
-        }
-        finally
-        {
-            isLoading = false;
-        }
+         
     }
 
     private async Task LoadLeaveRequestsAsync()
@@ -292,6 +311,80 @@ else
         finally
         {
             isSubmitting = false;
+        }
+    }
+      private Task ApproveAsync(int id) => UpdateStatusAsync(id, "Approved");
+    private Task RejectAsync(int id) => UpdateStatusAsync(id, "Rejected");
+
+    private async Task UpdateStatusAsync(int id, string newStatus)
+    {
+        try
+        {
+            processingIds.Add(id);
+            actionErrorMessage = null;
+
+            var http = HttpClientFactory.CreateClient("LeaveApi");
+            http.DefaultRequestHeaders.Authorization =
+                new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", Jwt);
+
+            var response = await http.PutAsJsonAsync(
+                $"api/leave-requests/{id}/status",
+                new { status = newStatus });
+
+            if (!response.IsSuccessStatusCode)
+            {
+                var body = await response.Content.ReadAsStringAsync();
+                actionErrorMessage =
+                    $"Failed to update request #{id}. " +
+                    $"Server returned {(int)response.StatusCode} " +
+                    $"({response.ReasonPhrase}). {body}";
+                return;
+            }
+
+            await LoadLeaveRequestsAsync();
+        }
+        catch (Exception ex)
+        {
+            actionErrorMessage = $"Failed to update request #{id}: {ex.Message}";
+        }
+        finally
+        {
+            processingIds.Remove(id);
+        }
+    }
+
+    private async Task DeleteAsync(int id)
+    {
+        try
+        {
+            processingIds.Add(id);
+            actionErrorMessage = null;
+
+            var http = HttpClientFactory.CreateClient("LeaveApi");
+            http.DefaultRequestHeaders.Authorization =
+                new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", Jwt);
+
+            var response = await http.DeleteAsync($"api/leave-requests/{id}");
+
+            if (!response.IsSuccessStatusCode)
+            {
+                var body = await response.Content.ReadAsStringAsync();
+                actionErrorMessage =
+                    $"Failed to delete request #{id}. " +
+                    $"Server returned {(int)response.StatusCode} " +
+                    $"({response.ReasonPhrase}). {body}";
+                return;
+            }
+
+            await LoadLeaveRequestsAsync();
+        }
+        catch (Exception ex)
+        {
+            actionErrorMessage = $"Failed to delete request #{id}: {ex.Message}";
+        }
+        finally
+        {
+            processingIds.Remove(id);
         }
     }
 }

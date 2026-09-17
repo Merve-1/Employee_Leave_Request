@@ -1,4 +1,5 @@
 using LeaveRequests.Client.Components;
+using LeaveRequests.Client.Auth;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -8,7 +9,7 @@ builder.Services.AddHttpClient("LeaveApi", client =>
 {
     client.BaseAddress = new Uri("http://localhost:5127/");
 });
-
+builder.Services.Configure<AuthOptions>(builder.Configuration.GetSection("Auth"));
 var app = builder.Build();
 
 if (!app.Environment.IsDevelopment())

@@ -1,3 +1,5 @@
+using System.Text.Json.Serialization;
+
 namespace LeaveRequests.Client.Models;
 
 public class LeaveRequestDto
@@ -12,6 +14,7 @@ public class LeaveRequestDto
 
     public DateTime EndDate { get; set; }
 
+    [JsonPropertyName("type")]
     public string LeaveType { get; set; } = string.Empty;
 
     public string Status { get; set; } = string.Empty;
