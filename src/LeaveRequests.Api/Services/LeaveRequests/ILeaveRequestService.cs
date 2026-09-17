@@ -9,4 +9,6 @@ public interface ILeaveRequestService
         int page, int pageSize);
     
     Task<LeaveRequestDto?> GetByIdAsync(int id);
+    
+    Task<LeaveRequestDto> CreateAsync(CreateLeaveRequestDto request);
 }

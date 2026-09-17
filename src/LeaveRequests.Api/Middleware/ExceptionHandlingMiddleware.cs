@@ -26,10 +26,15 @@ public class ExceptionHandlingMiddleware
             _logger.LogError(e, "Employee service error.");
             await WriteErrorResponseAsync(context, StatusCodes.Status503ServiceUnavailable, e.Message);
         }
-        catch (LeaveRequestServiceException e)
+        catch (KeyNotFoundException e)
         {
-            _logger.LogError(e, "Leave request service error.");
-            await WriteErrorResponseAsync(context, StatusCodes.Status503ServiceUnavailable, e.Message);
+            _logger.LogError(e, "Resource not found.");
+            await WriteErrorResponseAsync(context, StatusCodes.Status404NotFound, e.Message);
+        }
+        catch (ArgumentException e)
+        {
+            _logger.LogError(e, "Invalid Argument");
+            await WriteErrorResponseAsync(context, StatusCodes.Status400BadRequest, e.Message);
         }
         catch (Exception e)
         {

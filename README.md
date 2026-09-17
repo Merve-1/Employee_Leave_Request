@@ -57,4 +57,10 @@ You can also create the db schema and seed the initial leave requests using the 
 ### Get All Leave Requests
 ![Get All LR](readme-images/07_LR.png)
 ### Get Leave Request with Filter 
-![Filtered LR](readme-image/08_FilteredLR.png)
+![Filtered LR](readme-images/08_FilteredLR.png)
+### Get Leave Request by ID
+![LR by ID](readme-images/09_leaveRequestByID.png)
+### Create Leave Request 
+![Create LeaveRequest](readme-images/10_PostLR.png)
+![Create LeaveRequest](readme-images/11_PostLR.png.png)
+![DB After Post Request](12_db.png)

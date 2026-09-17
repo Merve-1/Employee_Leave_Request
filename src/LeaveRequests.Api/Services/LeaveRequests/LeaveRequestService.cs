@@ -55,6 +55,38 @@ public class LeaveRequestService : ILeaveRequestService
         return MapToDto(leaveRequest, employee);
     }
 
+    public async Task<LeaveRequestDto> CreateAsync(CreateLeaveRequestDto request)
+    {
+        var employee = await _employeeService.GetByIdAsync(request.EmployeeId);
+        if (request.EndDate < request.StartDate)
+        {
+            throw new ArgumentException("EndDate must be before StartDate");
+        }
+        if (employee is null)
+        {
+            throw new KeyNotFoundException($"Employee with id {request.EmployeeId} not found.");
+        }
+
+        var leaveRequest = new LeaveRequest
+        {
+            EmployeeId = request.EmployeeId,
+            StartDate = request.StartDate,
+            EndDate = request.EndDate,
+            Type = request.Type,
+            Status = LeaveStatus.Pending,
+            CreatedAt = DateTime.UtcNow,
+            ReviewerNote = request.ReviewerNote
+        };
+        _context.LeaveRequests.Add(leaveRequest);
+        await _context.SaveChangesAsync();
+        Console.WriteLine($"Created leave request with id {leaveRequest.Id}");
+        
+        var exists = await _context.LeaveRequests.AsNoTracking().AnyAsync(l => l.Id == leaveRequest.Id);
+
+        Console.WriteLine($"Exists in DB: {exists}");
+        return MapToDto(leaveRequest, employee);
+    }
+
     private LeaveRequestDto MapToDto(LeaveRequest leaveRequest, EmployeeDto? employee)
     {
         return new LeaveRequestDto
@@ -71,4 +103,6 @@ public class LeaveRequestService : ILeaveRequestService
             ReviewerNote = leaveRequest.ReviewerNote
         };
     }
+    
+    
 }
