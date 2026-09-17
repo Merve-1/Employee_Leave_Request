@@ -1,0 +1,52 @@
+@page "/employees"
+
+@using LeaveRequests.Client.Models
+@using LeaveRequests.Client.Services
+@inject EmployeeApiService EmployeeApiService
+
+<h1>Employees</h1>
+
+@if (isLoading)
+{
+    <p>Loading employees...</p>    
+}
+else if (!string.IsNullOrEmpty(errorMessage))
+{
+    <p>Error: @errorMessage</p>
+}else if (employees.Count == 0)
+{
+    <p>No employees found</p>
+}
+else
+{
+    <ul>
+        @foreach (var employee in employees)
+        {
+            <li>@employee.Name => @employee.Department</li>
+        }
+    </ul>
+}
+
+@code{
+
+    private List<EmployeeDto> employees = [];
+    private bool isLoading = true;
+    private string? errorMessage;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            employees = await EmployeeApiService.GetEmployeesAsync();
+        }
+        catch (Exception e)
+        {
+            errorMessage = e.Message;
+        }
+        finally
+        {
+            isLoading = false;
+        }
+
+    }
+}
