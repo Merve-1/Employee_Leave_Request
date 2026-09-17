@@ -1,6 +1,7 @@
 using LeaveRequests.Api.DTOs;
 using LeaveRequests.Api.Enums;
 using LeaveRequests.Api.Services.LeaveRequests;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace LeaveRequests.Api.Controllers;
@@ -103,6 +104,7 @@ public class LeaveRequestsController : ControllerBase
     /// <param name="request"></param>
     /// <returns></returns>
     [HttpPut("{id:int}/status")]
+    [Authorize(Roles ="HR")]
     public async Task<IActionResult> UpdateStatus(int id, [FromBody] UpdateLeaveStatusDto request)
     {
         var leaveRequest = await _leaveRequestService.UpdateStatusAsync(id, request);

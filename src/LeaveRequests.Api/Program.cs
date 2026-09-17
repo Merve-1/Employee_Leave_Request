@@ -7,12 +7,13 @@ using LeaveRequests.Api.Services;
 using LeaveRequests.Api.Services.LeaveRequests;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddDbContext<LeaveDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("LeaveDatabase")));
-
+builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme).AddJwtBearer();
 
 builder.Services.AddHttpClient<IEmployeeService, EmployeeService>(client =>
 {
@@ -29,7 +30,7 @@ builder.Services.AddControllers()
             {
                 message = "Validation failed",
                 errors = context.ModelState.Where(k => k.Value?.Errors.Count > 0)
-                    .ToDictionary(k => k.Key, v => v.Value.Errors.Select(x => x.ErrorMessage).ToArray())
+                    .ToDictionary(k => k.Key, v => v.Value!.Errors.Select(x => x.ErrorMessage).ToArray())
             });
         };
     })
@@ -37,6 +38,8 @@ builder.Services.AddControllers()
     {
     options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
     });
+
+
 builder.Services.AddScoped<ILeaveRequestService, LeaveRequestService>();
 
 
@@ -58,6 +61,7 @@ if (app.Environment.IsDevelopment())
     app.UseSwagger();
     app.UseSwaggerUI();
 }
+builder.Services.AddAuthorization();
 
 app.UseHttpsRedirection();
 

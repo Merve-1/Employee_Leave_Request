@@ -67,5 +67,10 @@ You can also create the db schema and seed the initial leave requests using the 
 ### Update Pending status 
 ![valid update](readme-images/13_validUpdate.png)
 ![invalid update](readme-images/14_invalidUpdate.png)
+#### JWT Authorization
+Token generation
+![TokenGeneration](readme-images/17_TokenGeneration.png)
+![JWT](readme-images/16_JWTRequest.png) 
+![successFUllUpdated](readme-images/18_SuccessJWT.png)
 ### Delete Leave Request
-![delete LR](15_DeleteLR.png)
+![delete LR](readme-images/15_DeleteLR.png)
