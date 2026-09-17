@@ -74,3 +74,18 @@ Token generation
 ![successFUllUpdated](readme-images/18_SuccessJWT.png)
 ### Delete Leave Request
 ![delete LR](readme-images/15_DeleteLR.png)
+
+## Docker Implementation 
+Build the docker image, then build and start the project using docker compose
+```
+docker build -t leave-request-api .
+
+docker compose build  
+
+docker compose up
+
+```
+
+Once the applicaiton is running, open swagger UI
+http://localhost:8080/swagger
+![dockerSwagger](readme-images/19_swagger.png)

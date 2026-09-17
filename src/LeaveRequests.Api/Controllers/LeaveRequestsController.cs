@@ -118,6 +118,11 @@ public class LeaveRequestsController : ControllerBase
         return Ok(leaveRequest);
     }
 
+    /// <summary>
+    /// Delete leave request
+    /// </summary>
+    /// <param name="id"></param>
+    /// <returns></returns>
     [HttpDelete("{id:int}")]
     public async Task<IActionResult> Delete(int id)
     {

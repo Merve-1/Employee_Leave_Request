@@ -1,0 +1,11 @@
+services:
+  leave-request-api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      
+    ports: 
+      - "8080:8080"
+    
+    environment:
+      ConnectionStrings_LeaveDatabase: "Server=host.docker.internal;Database=LeaveRequestsDb;Trusted_Connection=True;TrustServerCertificate=True;"

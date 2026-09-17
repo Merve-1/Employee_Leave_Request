@@ -13,6 +13,8 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddDbContext<LeaveDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("LeaveDatabase")));
+
+var connectionString= builder.Configuration.GetConnectionString("LeaveDatabase");
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme).AddJwtBearer();
 
 builder.Services.AddHttpClient<IEmployeeService, EmployeeService>(client =>
