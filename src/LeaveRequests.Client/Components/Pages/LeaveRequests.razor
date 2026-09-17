@@ -1,0 +1,117 @@
+@page "/leave-requests"
+@using global::LeaveRequests.Client.Models
+
+@inject IHttpClientFactory HttpClientFactory
+
+<PageTitle>Leave Requests</PageTitle>
+
+<h3>Leave Requests</h3>
+
+<div class="mb-3">
+    <label for="statusFilter" class="form-label">Status</label>
+
+    <select id="statusFilter"
+            class="form-select"
+            @bind="selectedStatus">
+        <option value="">All</option>
+        <option value="Pending">Pending</option>
+        <option value="Approved">Approved</option>
+        <option value="Rejected">Rejected</option>
+    </select>
+</div>
+
+@if (isLoading)
+{
+    <p>Loading leave requests...</p>
+}
+else if (!string.IsNullOrWhiteSpace(errorMessage))
+{
+    <div class="alert alert-danger">
+        @errorMessage
+    </div>
+}
+else if (FilteredLeaveRequests.Count == 0)
+{
+    <p>No leave requests found.</p>
+}
+else
+{
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>Employee</th>
+                <th>Start Date</th>
+                <th>End Date</th>
+                <th>Type</th>
+                <th>Status</th>
+            </tr>
+        </thead>
+
+        <tbody>
+            @foreach (var request in FilteredLeaveRequests)
+            {
+                <tr>
+                    <td>@request.EmployeeName</td>
+                    <td>@request.StartDate.ToString("yyyy-MM-dd")</td>
+                    <td>@request.EndDate.ToString("yyyy-MM-dd")</td>
+                    <td>@request.LeaveType</td>
+                    <td>@request.Status</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+@code {
+    private List<LeaveRequestDto> leaveRequests = new();
+
+    private bool isLoading = true;
+
+    private string? errorMessage;
+
+    private string selectedStatus = "";
+
+    private List<LeaveRequestDto> FilteredLeaveRequests =>
+        string.IsNullOrWhiteSpace(selectedStatus)
+            ? leaveRequests
+            : leaveRequests
+                .Where(x => x.Status.Equals(
+                    selectedStatus,
+                    StringComparison.OrdinalIgnoreCase))
+                .ToList();
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            isLoading = true;
+            errorMessage = null;
+
+            var http = HttpClientFactory.CreateClient("LeaveApi");
+            var response = await http.GetAsync("api/leave-requests");
+
+            if (!response.IsSuccessStatusCode)
+            {
+                errorMessage =
+                    $"Failed to load leave requests. " +
+                    $"Server returned {(int)response.StatusCode} " +
+                    $"({response.ReasonPhrase}).";
+
+                return;
+            }
+
+            var result =
+                await response.Content.ReadFromJsonAsync<List<LeaveRequestDto>>();
+
+            leaveRequests = result ?? new List<LeaveRequestDto>();
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Failed to load leave requests: {ex.Message}";
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+}

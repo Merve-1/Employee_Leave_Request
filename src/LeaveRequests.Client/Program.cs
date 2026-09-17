@@ -1,5 +1,4 @@
 using LeaveRequests.Client.Components;
-using LeaveRequests.Client.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -10,7 +9,6 @@ builder.Services.AddHttpClient("LeaveApi", client =>
     client.BaseAddress = new Uri("http://localhost:5127/");
 });
 
-builder.Services.AddScoped<EmployeeApiService>();
 var app = builder.Build();
 
 if (!app.Environment.IsDevelopment())
@@ -19,7 +17,7 @@ if (!app.Environment.IsDevelopment())
     app.UseHsts();
 }
 
-app.UseHttpsRedirection();
+//app.UseHttpsRedirection();
 
 app.UseStaticFiles();
 app.UseAntiforgery();
