@@ -37,6 +37,17 @@ dotnet ef database update
 ### DB After Seeding
 ![DB Seeding](readme-images/02_db2.png)
 
+## DB using Script 
+You can also create the db schema and seed the initial leave requests using the database/SQLQuery2.sql and will get the same output just change the name of the db in the appsettings.Development.json to the same db name in the script 
+```
+{ 
+     "ConnectionStrings": { 
+        "LeaveDatabase": "Server=localhost;Database=leaveRequestScript;Trusted_Connection=True;TrustServerCertificate=True;" 
+    } 
+}
+```
+![script](readme-images/06_script.png)
+![scriptdb](readme-images/05_scriptdb.png)
 ## End Points 
 
 ### Get Employees
