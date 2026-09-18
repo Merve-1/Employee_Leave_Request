@@ -3,7 +3,8 @@
 ## Requirements
  - .NET 8 SDK 
  - IDE (Used JetBrains: Rider)
- - SQL Server Management Studio 
+ - SQL Server Management Studio
+ - Docker Desktop 
 
 ## Clone the Project 
  ```
@@ -89,3 +90,14 @@ docker compose up
 Once the applicaiton is running, open swagger UI
 http://localhost:8080/swagger
 ![dockerSwagger](readme-images/19_swagger.png)
+
+To be able to update the status of the leave request you need to define the user token in the leaverequest.client
+```
+dotnet user-secrets init
+
+dotnet user-jwts create --role "HR"
+
+dotnet user-secrets set "Auth:HardcodedJwt" "add_the_generated_token_from_previous_command"
+
+dotnet user-secrets list
+```
